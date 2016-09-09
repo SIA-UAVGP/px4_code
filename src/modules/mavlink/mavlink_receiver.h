@@ -78,6 +78,15 @@
 #include <uORB/topics/transponder_report.h>
 #include <uORB/topics/gps_inject_data.h>
 
+#include <uORB/topics/fixed_target_position.h>
+#include <uORB/topics/fixed_target_return.h>
+#include <uORB/topics/yaw_sp_calculated.h>
+#include <uORB/topics/task_status_change.h>
+#include <uORB/topics/task_status_monitor.h>
+#include <uORB/topics/vision_num_scan.h>
+#include <uORB/topics/vision_one_num_get.h>
+#include <uORB/topics/obstacle_position.h>
+
 #include "mavlink_ftp.h"
 
 #define PX4_EPOCH_SECS 1234567890ULL
@@ -144,6 +153,15 @@ private:
 	void handle_message_gps_rtcm_data(mavlink_message_t *msg);
 	void handle_message_battery_status(mavlink_message_t *msg);
 	void handle_message_serial_control(mavlink_message_t *msg);
+
+	void handle_message_fixed_target_position(mavlink_message_t *msg);
+	void handle_message_fixed_target_return(mavlink_message_t *msg);
+	void handle_message_yaw_sp_calculated(mavlink_message_t *msg);
+	void handle_message_task_status_change(mavlink_message_t *msg);
+	void handle_message_task_status_monitor(mavlink_message_t *msg);
+	void handle_message_vision_num_scan(mavlink_message_t *msg);
+	void handle_message_vision_one_num_get(mavlink_message_t *msg);
+	void handle_message_obstacle_position(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -220,6 +238,16 @@ private:
 	orb_advert_t _transponder_report_pub;
 	static const int _gps_inject_data_queue_size = 6;
 	orb_advert_t _gps_inject_data_pub;
+
+	orb_advert_t _fixed_target_position_pub;
+	orb_advert_t _fixed_target_return_pub;
+	orb_advert_t _yaw_sp_calculated_pub;
+	orb_advert_t _task_status_change_pub;
+	orb_advert_t _task_status_monitor_pub;
+	orb_advert_t _vision_num_scan_pub;
+	orb_advert_t _vision_one_num_get_pub;
+	orb_advert_t _obstacle_position_pub;
+
 	int _control_mode_sub;
 	int _hil_frames;
 	uint64_t _old_timestamp;

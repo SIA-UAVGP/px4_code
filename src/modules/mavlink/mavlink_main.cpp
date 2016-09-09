@@ -1918,10 +1918,11 @@ Mavlink::task_main(int argc, char *argv[])
 	configure_stream("COMMAND_LONG", 100.0f);
 
 	/********** 8 custom mavlink messages ***********/
-	// configure_stream("FIXED_TARGET_POSITION", 10.0f);
+	// ！！！
+	configure_stream("FIXED_TARGET_POSITION", 10.0f);
 	configure_stream("FIXED_TARGET_RETURN", 10.0f);
 	configure_stream("YAW_SP_CALCULATED", 10.0f);
-	// configure_stream("TASK_STATUS_CHANGE", 20.0f);
+	configure_stream("TASK_STATUS_CHANGE", 20.0f);
 	configure_stream("TASK_STATUS_MONITOR", 30.0f);
 	configure_stream("VISION_NUM_SCAN", 20.0f);
 	configure_stream("VISION_ONE_NUM_GET", 20.0f);
