@@ -91,6 +91,15 @@
 #include <uORB/topics/wind_estimate.h>
 #include <uORB/uORB.h>
 
+#include <uORB/topics/fixed_target_position.h>
+#include <uORB/topics/fixed_target_return.h>
+#include <uORB/topics/yaw_sp_calculated.h>
+#include <uORB/topics/task_status_change.h>
+#include <uORB/topics/task_status_monitor.h>
+#include <uORB/topics/vision_num_scan.h>
+#include <uORB/topics/vision_one_num_get.h>
+#include <uORB/topics/obstacle_position.h>
+
 
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_state,
@@ -3443,6 +3452,570 @@ protected:
 	}
 };
 
+/********** 8 custom mavlink messages ***********/
+
+class MavlinkStreamFixedTargetPosition : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamFixedTargetPosition::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "FIXED_TARGET_POSITION";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_FIXED_TARGET_POSITION;
+	}
+
+	uint8_t get_id()
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamFixedTargetPosition(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_FIXED_TARGET_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+	bool const_rate()
+	{
+		return true;
+	}
+
+private:
+	MavlinkOrbSubscription *_fixed_target_position_sub;
+	uint64_t _fixed_target_position_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamFixedTargetPosition(MavlinkStreamFixedTargetPosition &);
+	MavlinkStreamFixedTargetPosition &operator = (const MavlinkStreamFixedTargetPosition &);
+
+protected:
+	explicit MavlinkStreamFixedTargetPosition(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_fixed_target_position_sub(_mavlink->add_orb_subscription(ORB_ID(fixed_target_position))),
+		_fixed_target_position_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct fixed_target_position_s fixed_target_position;
+
+		bool updated = _fixed_target_position_sub->update(&_fixed_target_position_time, &fixed_target_position);
+
+		if (updated) {
+
+			mavlink_fixed_target_position_t msg;
+
+			msg.home_lon=fixed_target_position.home_lon;
+			msg.home_lat=fixed_target_position.home_lat;
+			msg.home_alt=fixed_target_position.home_alt;
+			msg.observe_lon=fixed_target_position.observe_lon;
+			msg.observe_lat=fixed_target_position.observe_lat;
+			msg.observe_alt=fixed_target_position.observe_alt;
+			msg.spray_left_lon=fixed_target_position.spray_left_lon;
+			msg.spray_left_lat=fixed_target_position.spray_left_lat;
+			msg.spray_left_alt=fixed_target_position.spray_left_alt;
+			msg.spray_right_lon=fixed_target_position.spray_right_lon;
+			msg.spray_right_lat=fixed_target_position.spray_right_lat;
+			msg.spray_right_alt=fixed_target_position.spray_right_alt;
+
+			mavlink_msg_fixed_target_position_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamFixedTargetReturn : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamFixedTargetReturn::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "FIXED_TARGET_RETURN";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_FIXED_TARGET_RETURN;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamFixedTargetReturn(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_fixed_target_return_time > 0) ? MAVLINK_MSG_ID_FIXED_TARGET_RETURN_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_fixed_target_return_sub;
+	uint64_t _fixed_target_return_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamFixedTargetReturn(MavlinkStreamFixedTargetReturn &);
+	MavlinkStreamFixedTargetReturn& operator = (const MavlinkStreamFixedTargetReturn &);
+
+protected:
+	explicit MavlinkStreamFixedTargetReturn(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_fixed_target_return_sub(_mavlink->add_orb_subscription(ORB_ID(fixed_target_return))),
+		_fixed_target_return_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct fixed_target_return_s fixed_target_return;
+
+		bool updated = _fixed_target_return_sub->update(&_fixed_target_return_time, &fixed_target_return);
+
+		if (updated) {
+
+			mavlink_fixed_target_return_t msg;
+
+			msg.timestamp=fixed_target_return.timestamp;
+			msg.home_lon=fixed_target_return.home_lon;
+			msg.home_lat=fixed_target_return.home_lat;
+			msg.home_alt=fixed_target_return.home_alt;
+			msg.observe_lon=fixed_target_return.observe_lon;
+			msg.observe_lat=fixed_target_return.observe_lat;
+			msg.observe_alt=fixed_target_return.observe_alt;
+			msg.spray_left_lon=fixed_target_return.spray_left_lon;
+			msg.spray_left_lat=fixed_target_return.spray_left_lat;
+			msg.spray_left_alt=fixed_target_return.spray_left_alt;
+			msg.spray_right_lon=fixed_target_return.spray_right_lon;
+			msg.spray_right_lat=fixed_target_return.spray_right_lat;
+			msg.spray_right_alt=fixed_target_return.spray_right_alt;
+
+			mavlink_msg_fixed_target_return_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamYawSpCalculated : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamYawSpCalculated::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "YAW_SP_CALCULATED";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_YAW_SP_CALCULATED;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamYawSpCalculated(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_yaw_sp_calculated_time > 0) ? MAVLINK_MSG_ID_YAW_SP_CALCULATED_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_yaw_sp_calculated_sub;
+	uint64_t _yaw_sp_calculated_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamYawSpCalculated(MavlinkStreamYawSpCalculated &);
+	MavlinkStreamYawSpCalculated& operator = (const MavlinkStreamYawSpCalculated &);
+
+protected:
+	explicit MavlinkStreamYawSpCalculated(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_yaw_sp_calculated_sub(_mavlink->add_orb_subscription(ORB_ID(yaw_sp_calculated))),
+		_yaw_sp_calculated_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct yaw_sp_calculated_s yaw_sp_calculated;
+
+		bool updated = _yaw_sp_calculated_sub->update(&_yaw_sp_calculated_time, &yaw_sp_calculated);
+
+		if (updated) {
+
+			mavlink_yaw_sp_calculated_t msg;
+
+			msg.timestamp=yaw_sp_calculated.timestamp;
+			msg.yaw_sp=yaw_sp_calculated.yaw_sp;
+
+			mavlink_msg_yaw_sp_calculated_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamTaskStatusChange : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamTaskStatusChange::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "TASK_STATUS_CHANGE";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_TASK_STATUS_CHANGE;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamTaskStatusChange(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_task_status_change_time > 0) ? MAVLINK_MSG_ID_TASK_STATUS_CHANGE_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_task_status_change_sub;
+	uint64_t _task_status_change_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamTaskStatusChange(MavlinkStreamTaskStatusChange &);
+	MavlinkStreamTaskStatusChange& operator = (const MavlinkStreamTaskStatusChange &);
+
+protected:
+	explicit MavlinkStreamTaskStatusChange(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_task_status_change_sub(_mavlink->add_orb_subscription(ORB_ID(task_status_change))),
+		_task_status_change_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct task_status_change_s task_status_change;
+
+		bool updated = _task_status_change_sub->update(&_task_status_change_time, &task_status_change);
+
+		if (updated) {
+
+			mavlink_task_status_change_t msg;
+
+			msg.num_odd_even=task_status_change.num_odd_even;
+			msg.task_status=task_status_change.task_status;
+			msg.loop_value=task_status_change.loop_value;
+
+			mavlink_msg_task_status_change_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamTaskStatusMonitor : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamTaskStatusMonitor::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "TASK_STATUS_MONITOR";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_TASK_STATUS_MONITOR;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamTaskStatusMonitor(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_task_status_monitor_time > 0) ? MAVLINK_MSG_ID_TASK_STATUS_MONITOR_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_task_status_monitor_sub;
+	uint64_t _task_status_monitor_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamTaskStatusMonitor(MavlinkStreamTaskStatusMonitor &);
+	MavlinkStreamTaskStatusMonitor& operator = (const MavlinkStreamTaskStatusMonitor &);
+
+protected:
+	explicit MavlinkStreamTaskStatusMonitor(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_task_status_monitor_sub(_mavlink->add_orb_subscription(ORB_ID(task_status_monitor))),
+		_task_status_monitor_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct task_status_monitor_s task_status_monitor;
+
+		bool updated = _task_status_monitor_sub->update(&_task_status_monitor_time, &task_status_monitor);
+
+		if (updated) {
+
+			mavlink_task_status_monitor_t msg;
+
+			msg.timestamp=task_status_monitor.timestamp;
+			msg.num_odd_even=task_status_monitor.num_odd_even;
+			msg.task_status=task_status_monitor.task_status;
+			msg.loop_value=task_status_monitor.loop_value;
+			msg.target_lon=task_status_monitor.target_lon;
+			msg.target_lat=task_status_monitor.target_lat;
+			msg.target_alt=task_status_monitor.target_alt;
+
+			mavlink_msg_task_status_monitor_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamVisionNumScan : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamVisionNumScan::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "VISION_NUM_SCAN";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_VISION_NUM_SCAN;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamVisionNumScan(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_vision_num_scan_time > 0) ? MAVLINK_MSG_ID_VISION_NUM_SCAN_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_vision_num_scan_sub;
+	uint64_t _vision_num_scan_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamVisionNumScan(MavlinkStreamVisionNumScan &);
+	MavlinkStreamVisionNumScan& operator = (const MavlinkStreamVisionNumScan &);
+
+protected:
+	explicit MavlinkStreamVisionNumScan(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_vision_num_scan_sub(_mavlink->add_orb_subscription(ORB_ID(vision_num_scan))),
+		_vision_num_scan_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct vision_num_scan_s vision_num_scan;
+
+		bool updated = _vision_num_scan_sub->update(&_vision_num_scan_time, &vision_num_scan);
+
+		if (updated) {
+
+			mavlink_vision_num_scan_t msg;
+
+			msg.timestamp=vision_num_scan.timestamp;
+			msg.board_num=vision_num_scan.board_num;
+			msg.board_x=vision_num_scan.board_x;
+			msg.board_y=vision_num_scan.board_y;
+			msg.board_z=vision_num_scan.board_z;
+			msg.board_valid=vision_num_scan.board_valid;
+
+			mavlink_msg_vision_num_scan_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamVisionOneNumGet : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamVisionOneNumGet::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "VISION_ONE_NUM_GET";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_VISION_ONE_NUM_GET;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamVisionOneNumGet(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_vision_one_num_get_time > 0) ? MAVLINK_MSG_ID_VISION_ONE_NUM_GET_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_vision_one_num_get_sub;
+	uint64_t _vision_one_num_get_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamVisionOneNumGet(MavlinkStreamVisionOneNumGet &);
+	MavlinkStreamVisionOneNumGet& operator = (const MavlinkStreamVisionOneNumGet &);
+
+protected:
+	explicit MavlinkStreamVisionOneNumGet(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_vision_one_num_get_sub(_mavlink->add_orb_subscription(ORB_ID(vision_one_num_get))),
+		_vision_one_num_get_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct vision_one_num_get_s vision_one_num_get;
+
+		bool updated = _vision_one_num_get_sub->update(&_vision_one_num_get_time, &vision_one_num_get);
+
+		if (updated) {
+
+			mavlink_vision_one_num_get_t msg;
+
+			msg.timestamp=vision_one_num_get.timestamp;
+			msg.loop_value=vision_one_num_get.loop_value;
+			msg.num=vision_one_num_get.num;
+
+			mavlink_msg_vision_one_num_get_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+class MavlinkStreamObstaclePosition : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamObstaclePosition::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "OBSTACLE_POSITION";
+	}
+
+	static uint8_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_OBSTACLE_POSITION;
+	}
+
+    uint8_t get_id()
+    {
+        return get_id_static();
+    }
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamObstaclePosition(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return (_obstacle_position_time > 0) ? MAVLINK_MSG_ID_OBSTACLE_POSITION_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES : 0;
+	}
+
+private:
+	MavlinkOrbSubscription *_obstacle_position_sub;
+	uint64_t _obstacle_position_time;
+
+	/* do not allow top copying this class */
+	MavlinkStreamObstaclePosition(MavlinkStreamObstaclePosition &);
+	MavlinkStreamObstaclePosition& operator = (const MavlinkStreamObstaclePosition &);
+
+protected:
+	explicit MavlinkStreamObstaclePosition(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_obstacle_position_sub(_mavlink->add_orb_subscription(ORB_ID(obstacle_position))),
+		_obstacle_position_time(0)
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		struct obstacle_position_s obstacle_position;
+
+		bool updated = _obstacle_position_sub->update(&_obstacle_position_time, &obstacle_position);
+
+		if (updated) {
+
+			mavlink_obstacle_position_t msg;
+
+			msg.timestamp=obstacle_position.timestamp;
+			msg.obstacle_x=obstacle_position.obstacle_x;
+			msg.obstacle_y=obstacle_position.obstacle_y;
+			msg.obstacle_z=obstacle_position.obstacle_z;
+			msg.obstacle_valid=obstacle_position.obstacle_valid;
+
+			mavlink_msg_obstacle_position_send_struct(_mavlink->get_channel(), &msg);
+		}
+	}
+};
+
+/************************************************/
+
 const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamHeartbeat::new_instance, &MavlinkStreamHeartbeat::get_name_static, &MavlinkStreamHeartbeat::get_id_static),
 	new StreamListItem(&MavlinkStreamStatustext::new_instance, &MavlinkStreamStatustext::get_name_static, &MavlinkStreamStatustext::get_id_static),
@@ -3487,5 +4060,14 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamAltitude::new_instance, &MavlinkStreamAltitude::get_name_static, &MavlinkStreamAltitude::get_id_static),
 	new StreamListItem(&MavlinkStreamADSBVehicle::new_instance, &MavlinkStreamADSBVehicle::get_name_static, &MavlinkStreamADSBVehicle::get_id_static),
 	new StreamListItem(&MavlinkStreamWind::new_instance, &MavlinkStreamWind::get_name_static, &MavlinkStreamWind::get_id_static),
+	/********** 8 custom mavlink messages ***********/
+	new StreamListItem(&MavlinkStreamFixedTargetPosition::new_instance, &MavlinkStreamFixedTargetPosition::get_name_static, &MavlinkStreamFixedTargetPosition::get_id_static),
+	new StreamListItem(&MavlinkStreamFixedTargetReturn::new_instance, &MavlinkStreamFixedTargetReturn::get_name_static, &MavlinkStreamFixedTargetReturn::get_id_static),
+	new StreamListItem(&MavlinkStreamYawSpCalculated::new_instance, &MavlinkStreamYawSpCalculated::get_name_static, &MavlinkStreamYawSpCalculated::get_id_static),
+	new StreamListItem(&MavlinkStreamTaskStatusChange::new_instance, &MavlinkStreamTaskStatusChange::get_name_static, &MavlinkStreamTaskStatusChange::get_id_static),
+	new StreamListItem(&MavlinkStreamTaskStatusMonitor::new_instance, &MavlinkStreamTaskStatusMonitor::get_name_static, &MavlinkStreamTaskStatusMonitor::get_id_static),
+	new StreamListItem(&MavlinkStreamVisionNumScan::new_instance, &MavlinkStreamVisionNumScan::get_name_static, &MavlinkStreamVisionNumScan::get_id_static),
+	new StreamListItem(&MavlinkStreamVisionOneNumGet::new_instance, &MavlinkStreamVisionOneNumGet::get_name_static, &MavlinkStreamVisionOneNumGet::get_id_static),
+	new StreamListItem(&MavlinkStreamObstaclePosition::new_instance, &MavlinkStreamObstaclePosition::get_name_static, &MavlinkStreamObstaclePosition::get_id_static),
 	nullptr
 };
