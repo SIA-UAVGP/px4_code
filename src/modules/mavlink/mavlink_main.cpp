@@ -1919,15 +1919,14 @@ Mavlink::task_main(int argc, char *argv[])
 
 	/********** 8 custom mavlink messages ***********/
 	// ！！！
-	configure_stream("FIXED_TARGET_POSITION", 10.0f);
-	configure_stream("FIXED_TARGET_RETURN", 10.0f);
-	configure_stream("YAW_SP_CALCULATED", 10.0f);
-	configure_stream("TASK_STATUS_CHANGE", 20.0f);
-	configure_stream("TASK_STATUS_MONITOR", 30.0f);
-	configure_stream("VISION_NUM_SCAN", 20.0f);
-	configure_stream("VISION_ONE_NUM_GET", 20.0f);
-	configure_stream("OBSTACLE_POSITION", 20.0f);
-
+	// configure_stream("FIXED_TARGET_POSITION", 2.0f);
+	configure_stream("FIXED_TARGET_RETURN", 2.0f);
+	configure_stream("YAW_SP_CALCULATED", 2.0f);
+	// configure_stream("TASK_STATUS_CHANGE", 2.0f);
+	configure_stream("TASK_STATUS_MONITOR", 5.0f);
+	configure_stream("VISION_NUM_SCAN", 5.0f);
+	configure_stream("VISION_ONE_NUM_GET", 5.0f);
+	configure_stream("OBSTACLE_POSITION", 5.0f);
 
 	/* PARAM_VALUE stream */
 	_parameters_manager = (MavlinkParametersManager *) MavlinkParametersManager::new_instance(this);
