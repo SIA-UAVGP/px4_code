@@ -67,6 +67,8 @@ BlockLocalPositionEstimator::BlockLocalPositionEstimator() :
 	_gps_delay(this, "GPS_DELAY"),
 	_gps_xy_stddev(this, "GPS_XY"),
 	_gps_z_stddev(this, "GPS_Z"),
+	_dgps_xy_stddev(this, "DGPS_XY"),
+	_dgps_z_stddev(this, "DGPS_Z"),
 	_gps_vxy_stddev(this, "GPS_VXY"),
 	_gps_vz_stddev(this, "GPS_VZ"),
 	_gps_eph_max(this, "EPH_MAX"),
@@ -139,6 +141,7 @@ BlockLocalPositionEstimator::BlockLocalPositionEstimator() :
 
 	// reference altitudes
 	_altOrigin(0),
+	_gpsbaroHgtDiff(0),
 	_altOriginInitialized(false),
 	_baroAltOrigin(0),
 	_gpsAltOrigin(0),
