@@ -179,8 +179,8 @@ int example_lz_thread_main(int argc, char *argv[])
 			task_status_pub.task_status=task_status_sub.task_status; //实际任务状态
 			task_status_pub.loop_value=task_status_sub.loop_value; //数字编号
 			task_status_pub.target_lon=position_sub.home_lon;
-			task_status_pub.target_lat=position_sub.home_lat;
-			task_status_pub.target_alt=position_sub.home_alt;
+			task_status_pub.target_lat=position_sub.home_lat+0.000001;
+			task_status_pub.target_alt=position_sub.home_alt+1;
 			// 发布主题，返回任务状态监视信息
 			_task_status_monitor_pub = orb_advertise(ORB_ID(task_status_monitor), &task_status_pub);
 			orb_publish(ORB_ID(task_status_monitor), _task_status_monitor_pub, &task_status_pub);
