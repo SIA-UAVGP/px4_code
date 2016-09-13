@@ -181,6 +181,8 @@ set(config_module_list
 
 	# Hardware test
 	#examples/hwtest
+
+	modules/example_lz
 )
 
 set(config_extra_builtin_cmds
