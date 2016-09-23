@@ -33,6 +33,7 @@ else
 		fmu sensor_reset 20
 	fi
 
+	#start baro -bdai
 	if ms5611 -s start
 	then
 	fi

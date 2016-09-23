@@ -35,6 +35,7 @@ then
 	then
 		set OUTPUT_DEV /dev/mkblctrl0
 	else
+	#default output is pwm_output0 -bdai
 		set OUTPUT_DEV /dev/pwm_output0
 	fi
 
@@ -43,6 +44,7 @@ then
 		set OUTPUT_DEV /dev/uavcan/esc
 	fi
 
+	#load mixer load -bdai
 	if mixer load $OUTPUT_DEV $MIXER_FILE
 	then
 		echo "INFO  [init] Mixer: $MIXER_FILE on $OUTPUT_DEV"
@@ -151,6 +153,7 @@ then
 			fi
 			if [ -e $OUTPUT_AUX_DEV -a $OUTPUT_MODE != hil ]
 			then
+				# load aux mixer file -bdai
 				if mixer load $OUTPUT_AUX_DEV $MIXER_AUX_FILE
 				then
 					echo "INFO  [init] Mixer: $MIXER_AUX_FILE on $OUTPUT_AUX_DEV"

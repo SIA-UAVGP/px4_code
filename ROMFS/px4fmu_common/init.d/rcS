@@ -8,6 +8,7 @@
 #
 # Start CDC/ACM serial driver
 #
+# used to open ACM, realize in Firmware/NuttX/apps/examples/cdcacm/cdcacm_main.c -bdai
 sercon
 
 #
@@ -26,6 +27,7 @@ if mount -t vfat /dev/mmcsd0 /fs/microsd
 then
 	# Start playing the startup tune
 	tone_alarm start
+# try to mound sd card if mount -t vart ** gonna error
 else
 	tone_alarm MBAGP
 	if mkfatfs /dev/mmcsd0
@@ -67,13 +69,17 @@ then
 	#
 	# Load parameters
 	#
+	# any params can load in this step -bdai
 	set PARAM_FILE /fs/microsd/params
+	
+	# mtd short of memory technology device/flash
 	if mtd start
 	then
 		set PARAM_FILE /fs/mtd_params
 	fi
 
 	param select $PARAM_FILE
+	#load param
 	if param load
 	then
 	else
@@ -88,6 +94,7 @@ then
 	if rgbled start
 	then
 	else
+		#blinkm not use in this version -bdai
 		if blinkm start
 		then
 			blinkm systemstate
@@ -95,7 +102,8 @@ then
 	fi
 
 	# Currently unused, but might be useful down the road
-	#if pca8574 start
+	# I2C I/O extend port -bdai
+	#if pca8574 start	
 	#then
 	#fi
 
@@ -193,6 +201,7 @@ then
 	#
 	# Set parameters and env variables for selected AUTOSTART
 	#
+	# when execute param reset, SYS_AUTOSTART is 0, or you can set by qground -bdai
 	if param compare SYS_AUTOSTART 0
 	then
 	else
@@ -230,6 +239,7 @@ then
 
 	set IO_PRESENT no
 
+	# FMUv2 USE_IO = yes -bdai
 	if [ $USE_IO == yes ]
 	then
 		#
@@ -242,6 +252,7 @@ then
 			set IO_FILE /etc/extras/px4io-v1.bin
 		fi
 
+		# CRC used to check whether firmware is the newest -bdai
 		if px4io checkcrc ${IO_FILE}
 		then
 			echo "[init] PX4IO CRC OK" >> $LOG_FILE
@@ -250,6 +261,7 @@ then
 		else
 			tone_alarm MLL32CP8MB
 
+			#start px4io
 			if px4io start
 			then
 				# try to safe px4 io so motor outputs dont go crazy
@@ -262,6 +274,7 @@ then
 				fi
 			fi
 
+			#force update firmware -bdai
 			if px4io forceupdate 14662 ${IO_FILE}
 			then
 				usleep 500000
@@ -281,7 +294,7 @@ then
 			fi
 		fi
 		unset IO_FILE
-
+	 
 		if [ $IO_PRESENT == no ]
 		then
 			echo "PX4IO not found" >> $LOG_FILE
@@ -296,6 +309,7 @@ then
 	then
 		if [ $USE_IO == yes ]
 		then
+			# default was set to io -bdai
 			set OUTPUT_MODE io
 		else
 			set OUTPUT_MODE fmu
@@ -670,7 +684,9 @@ then
 		then
 		fi
 	else
-		# check if we should increase logging rate for ekf2 replay message logging
+		# check if we should increase logging rate for ekf2 replay message logging	
+		
+		# greater means if EKF2_REC_RPL > 0
 		if param greater EKF2_REC_RPL 0
 		then
 			if param compare SYS_LOGGER 0
