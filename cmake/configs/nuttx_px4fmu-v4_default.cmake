@@ -61,7 +61,7 @@ set(config_module_list
 	systemcmds/pwm
 	systemcmds/esc_calib
 	systemcmds/reboot
-	systemcmds/topic_listener
+	# systemcmds/topic_listener
 	systemcmds/top
 	systemcmds/config
 	systemcmds/nshterm
@@ -166,7 +166,7 @@ set(config_module_list
 	#examples/math_demo
 	# Tutorial code from
 	# https://px4.io/dev/px4_simple_app
-	examples/px4_simple_app
+	# examples/px4_simple_app
 
 	# Tutorial code from
 	# https://px4.io/dev/daemon
@@ -184,7 +184,17 @@ set(config_module_list
 	#examples/hwtest
 
 	# EKF
-	examples/ekf_att_pos_estimator
+	#examples/ekf_att_pos_estimator
+	# User modules
+	modules/servo_control
+	
+	# huanglilong
+	modules/mavlink_msg_receive_test
+    modules/mavlink_msg_send_test
+
+	# liuzhong
+	modules/example_lz
+	modules/uavgp_communication
 )
 
 set(config_extra_builtin_cmds
