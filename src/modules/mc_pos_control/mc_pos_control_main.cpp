@@ -177,6 +177,11 @@ private:
 	control::BlockParamFloat _manual_thr_min;
 	control::BlockParamFloat _manual_thr_max;
 
+	control::BlockParamFloat _x_p1;
+	control::BlockParamFloat _y_p1;
+	control::BlockParamFloat _z_p1;
+	control::BlockParamFloat _i_accu_r;
+
 	control::BlockDerivative _pos_x_deriv;
 	control::BlockDerivative _pos_y_deriv;
 	control::BlockDerivative _pos_z_deriv;
@@ -431,6 +436,10 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_task_status{},
 	_manual_thr_min(this, "MANTHR_MIN"),
 	_manual_thr_max(this, "MANTHR_MAX"),
+	_x_p1(this,"X_P1"),
+	_y_p1(this,"Y_P1"),
+	_z_p1(this,"Z_P1"),
+	_i_accu_r(this,"ACCUMU_I"),
 	_pos_x_deriv(this, "POSD"),
 	_pos_y_deriv(this, "POSD"),
 	_pos_z_deriv(this, "POSD"),
@@ -1344,6 +1353,8 @@ MulticopterPositionControl::task_main()
 	bool reset_int_pxy = true;
 	bool reset_int_pz = true;
 
+	bool enable_int_accu_xy = false;
+
 	hrt_abstime t_prev = 0;
 
 	math::Vector<3> pos_err;
@@ -1499,6 +1510,7 @@ MulticopterPositionControl::task_main()
 			_run_alt_control = true;
 			reset_int_pxy = true;
 			reset_int_pz = true;
+			enable_int_accu_xy = false;
 			pos_err_p.zero();
 			pos_err_d.zero();
 
@@ -1589,15 +1601,22 @@ MulticopterPositionControl::task_main()
 //					_vel_sp(0) = (_pos_sp(0) - _pos(0)) * _params.pos_p(0);
 //					_vel_sp(1) = (_pos_sp(1) - _pos(1)) * _params.pos_p(0);
 
-					pos_err_p(0) = pos_err(0) * _params.pos_p(0);
-					pos_err_p(1) = pos_err(1) * _params.pos_p(1);
-					pos_err_d(0) = _pos_err_d(0) * _params.pos_d(0);
-					pos_err_d(1) = _pos_err_d(1) * _params.pos_d(1);
 					if (sqrtf(pos_err(0)*pos_err(0) + pos_err(1)*pos_err(1)) > _params.id_enable_radius) {
 						reset_int_pxy = true;
+						pos_err_p(0) = pos_err(0) * _params.pos_p(0);
+						pos_err_p(1) = pos_err(1) * _params.pos_p(1);
 						pos_err_d(0) = pos_err_d(1) = 0; /*set D as 0 -bdai<10 Oct 2016>*/
 					} else {
 						reset_int_pxy = false;
+						pos_err_p(0) = pos_err(0) * _x_p1.get();
+						pos_err_p(1) = pos_err(1) * _y_p1.get();
+						pos_err_d(0) = _pos_err_d(0) * _params.pos_d(0);
+						pos_err_d(1) = _pos_err_d(1) * _params.pos_d(1);
+
+						if (sqrtf(pos_err(0)*pos_err(0) + pos_err(1)*pos_err(1)) < _i_accu_r.get()){
+							enable_int_accu_xy = true;
+						}
+						
 					}
 
 					_vel_sp(0) = pos_err_p(0) + pos_err_i(0) + pos_err_d(0);
@@ -1651,15 +1670,16 @@ MulticopterPositionControl::task_main()
 
 				if (_run_alt_control) {
 //					_vel_sp(2) = (_pos_sp(2) - _pos(2)) * _params.pos_p(2);
-					pos_err_p(2) = pos_err(2) * _params.pos_p(2);
-					pos_err_d(2) = _pos_err_d(2) * _params.pos_d(2);
 
 					if (fabsf(pos_err(2)) > _params.zid_enable_radius)
 					{
 						reset_int_pz = true;
+						pos_err_p(2) = pos_err(2) * _params.pos_p(2);
 						pos_err_d(2) = 0; /*set D as 0 -bdai<10 Oct 2016>*/
 					} else {
 						reset_int_pz = false;
+						pos_err_p(2) = pos_err(2) * _z_p1.get();
+						pos_err_d(2) = _pos_err_d(2) * _params.pos_d(2);
 					}
 
 					_vel_sp(2) = pos_err_p(2) +  pos_err_i(2) + pos_err_d(2);
@@ -1674,8 +1694,10 @@ MulticopterPositionControl::task_main()
 					_vel_sp(0) = _vel_sp(0) * _params.vel_max(0) / vel_norm_xy;
 					_vel_sp(1) = _vel_sp(1) * _params.vel_max(1) / vel_norm_xy;
 				} else if(_run_pos_control){
-					pos_err_i(0) += pos_err(0) * _params.pos_i(0) * dt;
-					pos_err_i(1) += pos_err(1) * _params.pos_i(1) * dt;
+					if (enable_int_accu_xy) {
+						pos_err_i(0) += pos_err(0) * _params.pos_i(0) * dt;
+						pos_err_i(1) += pos_err(1) * _params.pos_i(1) * dt;
+					}
 				}
 
 				if (_task_status.task_status >= 32 && _task_status.task_status <= 35
