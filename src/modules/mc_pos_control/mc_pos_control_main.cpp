@@ -97,6 +97,16 @@
 #define ONE_G	9.8066f
 #define SCAN_SPEED 1.5f
 
+static math::Vector<3> TestPoint[4] = {
+	math::Vector<3> (5.0f,0.0f,-1.5f),
+	math::Vector<3> (15.0f,0.0f,-1.5f),
+	math::Vector<3> (15.0f,-10.0f,-1.5f),
+	math::Vector<3> (5.0f,-10.0f,-1.5f)
+};
+static int tested_point = 0;
+static hrt_abstime test_start = hrt_absolute_time();
+static float period = 20.0f;
+
 /**
  * Multicopter position control app start / stop handling function
  *
@@ -942,31 +952,38 @@ MulticopterPositionControl::control_manual(float dt)
 
 	/* horizontal axes */
 	if (_control_mode.flag_control_position_enabled) {
-		/* check for pos. hold */
-		if (fabsf(req_vel_sp(0)) < _params.hold_xy_dz && fabsf(req_vel_sp(1)) < _params.hold_xy_dz) {
-			if (!_pos_hold_engaged) {
-				if (_params.hold_max_xy < FLT_EPSILON || (fabsf(_vel(0)) < _params.hold_max_xy
-						&& fabsf(_vel(1)) < _params.hold_max_xy)) {
-					_pos_hold_engaged = true;
+		// /* check for pos. hold */
+		// if (fabsf(req_vel_sp(0)) < _params.hold_xy_dz && fabsf(req_vel_sp(1)) < _params.hold_xy_dz) {
+		// 	if (!_pos_hold_engaged) {
+		// 		if (_params.hold_max_xy < FLT_EPSILON || (fabsf(_vel(0)) < _params.hold_max_xy
+		// 				&& fabsf(_vel(1)) < _params.hold_max_xy)) {
+		// 			_pos_hold_engaged = true;
 
-				} else {
-					_pos_hold_engaged = false;
-				}
-			}
+		// 		} else {
+		// 			_pos_hold_engaged = false;
+		// 		}
+		// 	}
 
-		} else {
-			_pos_hold_engaged = false;
-		}
+		// } else {
+		// 	_pos_hold_engaged = false;
+		// }
 
-		/* set requested velocity setpoint */
-		if (!_pos_hold_engaged) {
-			_pos_sp(0) = _pos(0);
-			_pos_sp(1) = _pos(1);
-			_run_pos_control = false; /* request velocity setpoint to be used, instead of position setpoint */
-			_vel_sp(0) = req_vel_sp_scaled(0);
-			_vel_sp(1) = req_vel_sp_scaled(1);
-		}
+		// /* set requested velocity setpoint */
+		// if (!_pos_hold_engaged) {
+		// 	_pos_sp(0) = _pos(0);
+		// 	_pos_sp(1) = _pos(1);
+		// 	_run_pos_control = false; /* request velocity setpoint to be used, instead of position setpoint */
+		// 	_vel_sp(0) = req_vel_sp_scaled(0);
+		// 	_vel_sp(1) = req_vel_sp_scaled(1);
+		// }
+		tested_point =  int((hrt_absolute_time() - test_start) * 1.0e-6f / period) % 4;
+		_pos_hold_engaged = true;
+		_pos_sp(0) = TestPoint[tested_point](0);
+		_pos_sp(1) = TestPoint[tested_point](1);
+		// PX4_INFO("tested_point:%d", tested_point);
 	} else {
+		tested_point = 0;
+		test_start = hrt_absolute_time();
 		_run_pos_control = false;
 	}
 
@@ -1490,18 +1507,18 @@ MulticopterPositionControl::task_main()
 				/* manual control */
 				control_manual(dt);
 				_mode_auto = false;
-				warnx("manual control");
+				// warnx("manual control");
 
 			} else if (_control_mode.flag_control_offboard_enabled) {
 				/* offboard control */
 				control_offboard(dt);
 				_mode_auto = false;
-				warnx("offboard control");
+				// warnx("offboard control");
 
 			} else {
 				/* AUTO */
 				control_auto(dt);
-				warnx("auto control");
+				// warnx("auto control");
 			}
 
 			/* weather-vane mode for vtol: disable yaw control */
@@ -1573,14 +1590,12 @@ MulticopterPositionControl::task_main()
 //					_vel_sp(1) = (_pos_sp(1) - _pos(1)) * _params.pos_p(0);
 
 					pos_err_p(0) = pos_err(0) * _params.pos_p(0);
-					pos_err_d(0) = _pos_err_d(0) * _params.pos_d(0);
 					pos_err_p(1) = pos_err(1) * _params.pos_p(1);
+					pos_err_d(0) = _pos_err_d(0) * _params.pos_d(0);
 					pos_err_d(1) = _pos_err_d(1) * _params.pos_d(1);
-
-					if (sqrtf(pos_err(0)*pos_err(0) + pos_err(1)*pos_err(1)) > _params.id_enable_radius)
-					{
+					if (sqrtf(pos_err(0)*pos_err(0) + pos_err(1)*pos_err(1)) > _params.id_enable_radius) {
 						reset_int_pxy = true;
-						pos_err_d(0) = pos_err_d(1) = pos_err_d(2) = 0; /*set D as 0 -bdai<10 Oct 2016>*/
+						pos_err_d(0) = pos_err_d(1) = 0; /*set D as 0 -bdai<10 Oct 2016>*/
 					} else {
 						reset_int_pxy = false;
 					}
