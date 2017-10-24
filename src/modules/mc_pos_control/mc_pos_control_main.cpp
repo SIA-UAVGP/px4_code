@@ -177,8 +177,7 @@ private:
 	control::BlockParamFloat _manual_thr_min;
 	control::BlockParamFloat _manual_thr_max;
 
-	control::BlockParamFloat _x_p1;
-	control::BlockParamFloat _y_p1;
+	control::BlockParamFloat _xy_p1;
 	control::BlockParamFloat _z_p1;
 	control::BlockParamFloat _i_accu_r;
 
@@ -204,18 +203,12 @@ private:
 		param_t z_vel_max_up;
 		param_t z_vel_max_down;
 		param_t z_ff;
-		param_t x_p;
-		param_t x_i;
-		param_t x_d;
-		param_t y_p;
-		param_t y_i;
-		param_t y_d;
-		param_t x_vel_p;
-		param_t x_vel_i;
-		param_t x_vel_d;
-		param_t y_vel_p;
-		param_t y_vel_i;
-		param_t y_vel_d;
+		param_t xy_p;
+		param_t xy_i;
+		param_t xy_d;
+		param_t xy_vel_p;
+		param_t xy_vel_i;
+		param_t xy_vel_d;
 		param_t xy_vel_max;
 		param_t xy_vel_cruise;
 		param_t xy_ff;
@@ -436,8 +429,7 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_task_status{},
 	_manual_thr_min(this, "MANTHR_MIN"),
 	_manual_thr_max(this, "MANTHR_MAX"),
-	_x_p1(this,"X_P1"),
-	_y_p1(this,"Y_P1"),
+	_xy_p1(this,"XY_P1"),
 	_z_p1(this,"Z_P1"),
 	_i_accu_r(this,"ACCUMU_I"),
 	_pos_x_deriv(this, "POSD"),
@@ -516,18 +508,12 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	param_set(param_find("MPC_Z_VEL_MAX_DN"), &p);
 
 	_params_handles.z_ff		= param_find("MPC_Z_FF");
-	_params_handles.x_p			= param_find("MPC_X_P");
-	_params_handles.x_i			= param_find("MPC_X_I");
-	_params_handles.x_d			= param_find("MPC_X_D");
-	_params_handles.y_p			= param_find("MPC_Y_P");
-	_params_handles.y_i			= param_find("MPC_Y_I");
-	_params_handles.y_d			= param_find("MPC_Y_D");
-	_params_handles.x_vel_p	= param_find("MPC_X_VEL_P");
-	_params_handles.x_vel_i	= param_find("MPC_X_VEL_I");
-	_params_handles.x_vel_d	= param_find("MPC_X_VEL_D");
-	_params_handles.y_vel_p	= param_find("MPC_Y_VEL_P");
-	_params_handles.y_vel_i	= param_find("MPC_Y_VEL_I");
-	_params_handles.y_vel_d	= param_find("MPC_Y_VEL_D");
+	_params_handles.xy_p			= param_find("MPC_XY_P");
+	_params_handles.xy_i			= param_find("MPC_XY_I");
+	_params_handles.xy_d			= param_find("MPC_XY_D");
+	_params_handles.xy_vel_p	= param_find("MPC_XY_VEL_P");
+	_params_handles.xy_vel_i	= param_find("MPC_XY_VEL_I");
+	_params_handles.xy_vel_d	= param_find("MPC_XY_VEL_D");
 
 	_params_handles.xy_vel_max	= param_find("MPC_XY_VEL_MAX");
 	_params_handles.xy_vel_cruise	= param_find("MPC_XY_CRUISE");
@@ -616,44 +602,38 @@ MulticopterPositionControl::parameters_update(bool force)
 		param_get(_params_handles.zid_enable_radius, &v);
 		_params.zid_enable_radius = v;
 
-		param_get(_params_handles.x_p, &v);
+		param_get(_params_handles.xy_p, &v);
 		_params.pos_p(0) = v;
-		param_get(_params_handles.y_p, &v);
 		_params.pos_p(1) = v;
 		param_get(_params_handles.z_p, &v);
 		_params.pos_p(2) = v;
 
-		param_get(_params_handles.x_i, &v);
+		param_get(_params_handles.xy_i, &v);
 		_params.pos_i(0) = v;
-		param_get(_params_handles.y_i, &v);
 		_params.pos_i(1) = v;
 		param_get(_params_handles.z_i, &v);
 		_params.pos_i(2) = v;
 
-		param_get(_params_handles.x_d, &v);
+		param_get(_params_handles.xy_d, &v);
 		_params.pos_d(0) = v;
-		param_get(_params_handles.y_d, &v);
 		_params.pos_d(1) = v;
 		param_get(_params_handles.z_d, &v);
 		_params.pos_d(2) = v;
 
-		param_get(_params_handles.x_vel_p, &v);
+		param_get(_params_handles.xy_vel_p, &v);
 		_params.vel_p(0) = v;
-		param_get(_params_handles.y_vel_p, &v);
 		_params.vel_p(1) = v;
 		param_get(_params_handles.z_vel_p, &v);
 		_params.vel_p(2) = v;
 
-		param_get(_params_handles.x_vel_i, &v);
+		param_get(_params_handles.xy_vel_i, &v);
 		_params.vel_i(0) = v;
-		param_get(_params_handles.y_vel_i, &v);
 		_params.vel_i(1) = v;
 		param_get(_params_handles.z_vel_i, &v);
 		_params.vel_i(2) = v;
 
-		param_get(_params_handles.x_vel_d, &v);
+		param_get(_params_handles.xy_vel_d, &v);
 		_params.vel_d(0) = v;
-		param_get(_params_handles.x_vel_d, &v);
 		_params.vel_d(1) = v;
 		param_get(_params_handles.z_vel_d, &v);
 		_params.vel_d(2) = v;
@@ -1608,8 +1588,8 @@ MulticopterPositionControl::task_main()
 						pos_err_d(0) = pos_err_d(1) = 0; /*set D as 0 -bdai<10 Oct 2016>*/
 					} else {
 						reset_int_pxy = false;
-						pos_err_p(0) = pos_err(0) * _x_p1.get();
-						pos_err_p(1) = pos_err(1) * _y_p1.get();
+						pos_err_p(0) = pos_err(0) * _xy_p1.get();
+						pos_err_p(1) = pos_err(1) * _xy_p1.get();
 						pos_err_d(0) = _pos_err_d(0) * _params.pos_d(0);
 						pos_err_d(1) = _pos_err_d(1) * _params.pos_d(1);
 
