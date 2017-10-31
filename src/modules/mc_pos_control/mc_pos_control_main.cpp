@@ -96,7 +96,9 @@
 #define MANUAL_THROTTLE_MAX_MULTICOPTER	0.9f
 #define ONE_G	9.8066f
 #define SCAN_SPEED 1.5f
+// #define PID_TEST
 
+#ifdef PID_TEST
 static math::Vector<3> TestPoint[4] = {
 	math::Vector<3> (5.0f,0.0f,-1.5f),
 	math::Vector<3> (15.0f,0.0f,-1.5f),
@@ -106,6 +108,7 @@ static math::Vector<3> TestPoint[4] = {
 static int tested_point = 0;
 static hrt_abstime test_start = hrt_absolute_time();
 static float period = 20.0f;
+#endif
 
 /**
  * Multicopter position control app start / stop handling function
@@ -941,30 +944,33 @@ MulticopterPositionControl::control_manual(float dt)
 
 	/* horizontal axes */
 	if (_control_mode.flag_control_position_enabled) {
-		// /* check for pos. hold */
-		// if (fabsf(req_vel_sp(0)) < _params.hold_xy_dz && fabsf(req_vel_sp(1)) < _params.hold_xy_dz) {
-		// 	if (!_pos_hold_engaged) {
-		// 		if (_params.hold_max_xy < FLT_EPSILON || (fabsf(_vel(0)) < _params.hold_max_xy
-		// 				&& fabsf(_vel(1)) < _params.hold_max_xy)) {
-		// 			_pos_hold_engaged = true;
+#ifndef PID_TEST
+		/* check for pos. hold */
+		if (fabsf(req_vel_sp(0)) < _params.hold_xy_dz && fabsf(req_vel_sp(1)) < _params.hold_xy_dz) {
+			if (!_pos_hold_engaged) {
+				if (_params.hold_max_xy < FLT_EPSILON || (fabsf(_vel(0)) < _params.hold_max_xy
+						&& fabsf(_vel(1)) < _params.hold_max_xy)) {
+					_pos_hold_engaged = true;
 
-		// 		} else {
-		// 			_pos_hold_engaged = false;
-		// 		}
-		// 	}
+				} else {
+					_pos_hold_engaged = false;
+				}
+			}
 
-		// } else {
-		// 	_pos_hold_engaged = false;
-		// }
+		} else {
+			_pos_hold_engaged = false;
+		}
 
-		// /* set requested velocity setpoint */
-		// if (!_pos_hold_engaged) {
-		// 	_pos_sp(0) = _pos(0);
-		// 	_pos_sp(1) = _pos(1);
-		// 	_run_pos_control = false; /* request velocity setpoint to be used, instead of position setpoint */
-		// 	_vel_sp(0) = req_vel_sp_scaled(0);
-		// 	_vel_sp(1) = req_vel_sp_scaled(1);
-		// }
+		/* set requested velocity setpoint */
+		if (!_pos_hold_engaged) {
+			_pos_sp(0) = _pos(0);
+			_pos_sp(1) = _pos(1);
+			_run_pos_control = false; /* request velocity setpoint to be used, instead of position setpoint */
+			_vel_sp(0) = req_vel_sp_scaled(0);
+			_vel_sp(1) = req_vel_sp_scaled(1);
+		}
+	}
+#else
 		tested_point =  int((hrt_absolute_time() - test_start) * 1.0e-6f / period) % 4;
 		_pos_hold_engaged = true;
 		_pos_sp(0) = TestPoint[tested_point](0);
@@ -975,7 +981,7 @@ MulticopterPositionControl::control_manual(float dt)
 		test_start = hrt_absolute_time();
 		_run_pos_control = false;
 	}
-
+#endif
 	/* vertical axis */
 	if (_control_mode.flag_control_altitude_enabled) {
 		/* check for pos. hold */
